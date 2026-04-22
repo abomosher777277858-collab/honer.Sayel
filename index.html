@@ -1,0 +1,34 @@
+import miniupnpc
+import socket
+
+def open_huawei_phone_port(port, protocol='TCP'):
+    upnp = miniupnpc.UPnP()
+    upnp.discoverdelay = 200
+    
+    try:
+        # 1. البحث عن الراوتر
+        print("Searching for Huawei Router...")
+        upnp.discover()
+        upnp.selectigd()
+        
+        # 2. الحصول على IP الهاتف المحلي (Local IP)
+        # نقوم بفتح اتصال وهمي لمعرفة الـ IP الذي يستخدمه الهاتف حالياً
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        phone_ip = s.getsockname()[0]
+        s.close()
+        
+        # 3. تنفيذ عملية فتح البورت
+        print(f"Phone IP detected: {phone_ip}")
+        result = upnp.addportmapping(port, protocol, phone_ip, port, 'HuaweiPhoneService', '')
+        
+        if result:
+            print(f"✅ Success: Port {port} is now open for this phone.")
+            print(f"External IP: {upnp.externalipaddress()}")
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        print("Make sure UPnP is enabled in your Router settings.")
+
+# مثال: فتح بورت 4444 (يستخدم غالباً في أدوات الاختبار)
+open_huawei_phone_port(4444)
